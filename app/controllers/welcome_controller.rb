@@ -32,6 +32,8 @@ class WelcomeController < ApplicationController
 
     puts "---"
     puts "allSummary.Confirmed=" + allSummaryConfirmed.to_s
+  
+    @dailies = Daily.all
   end
 
 
