@@ -3,9 +3,7 @@ class WelcomeController < ApplicationController
   KTerritoryWorld           = "world"
 
   def index
-    dataPathBase  = "/Users/dlevers/Src/Sandbox/Coronavirus19/data/JohnsHopkinsPipedream/"
-    # fileName      = "2020-03-20-13.22.json"
-    #allSummary  = { "Confirmed" => 0 }
+    dataPathBase        = "/Users/dlevers/Src/Sandbox/Coronavirus19/data/JohnsHopkinsPipedream/"
     allSummaryConfirmed = 0
 
     Dir.foreach( dataPathBase ) do |filename|
@@ -19,7 +17,6 @@ class WelcomeController < ApplicationController
         dailies = Daily.find_by( :date => dateString )
         if !dailies
           puts "index: keep for ZERO dailies.length"
-          #allSummary[ "Confirmed" ] += indexOneFile( dataPathBase, filename )
           allSummaryConfirmed = indexOneFile( dateString, dataPathBase, filename )
           puts "index: allSummaryConfirmed=" + allSummaryConfirmed.to_s
         else
@@ -62,8 +59,6 @@ class WelcomeController < ApplicationController
 
     puts "pathIn:        " + pathIn
     puts "filenameIn:    " + filenameIn
-    # puts "apiSourceCode: " + ojs[ "apiSourceCode" ]
-    # puts "entry count:   " + ojs[ "rawData" ].length.to_s
     countrySummaries  = {}
 
     puts "---"
@@ -99,8 +94,6 @@ class WelcomeController < ApplicationController
                           :summary => false, :confirmed => oneRawValue[ "Confirmed" ], :recovered => oneRawValue[ "Recovered" ],
                           :deaths => oneRawValue[ "Deaths" ], :latitude => oneRawValue[ "Latitude" ].to_f, :longitude => oneRawValue[ "Longitude" ].to_f )
       else
-        # puts "one.Country/Region=" + oneRawValue[ "Country/Region" ] + "  confirmed=" + oneRawValue[ "Confirmed" ]
-        #totalConfirmed  += oneRawValue[ "Confirmed" ].to_i
         @daily  = Daily.new( :date => datestringIn, :territory => oneRawValue[ "Country/Region" ], :territoryparent => KTerritoryWorld,
                           :summary => false, :confirmed => oneRawValue[ "Confirmed" ], :recovered => oneRawValue[ "Recovered" ],
                           :deaths => oneRawValue[ "Deaths" ], :latitude => oneRawValue[ "Latitude" ].to_f, :longitude => oneRawValue[ "Longitude" ].to_f )

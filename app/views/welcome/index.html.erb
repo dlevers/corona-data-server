@@ -41,19 +41,19 @@
 
       function drawGraphWorld() {
         var data = new google.visualization.DataTable();
-      //  data.addColumn( 'string', 'Date' );
-        data.addColumn( 'string', 'Territory' );
+        data.addColumn( 'string', 'Date' );
+      //  data.addColumn( 'string', 'Territory' );
         data.addColumn( 'number', 'Confirmed' );
       //  data.addColumn( 'number', 'Recovered' );
       //  data.addColumn( 'number', 'Deaths' );
         data.addRows([
-          <% @dailies.each do |daily| %>
-            [ "<%= daily.territory %>", <%= daily.confirmed.to_i %> ],
+          <% @dailies.where( :territory => "world", :summary => 1 ).sort_by( &:date ).each do |daily| %>
+            [ "<%= daily.date %>", <%= daily.confirmed.to_i %> ],
           <% end %>
         ]);
 
         // Set chart options
-        var options = { 'title':'Dailies',
+        var options = { 'title':'World',
                         'width':400,
                         'height':300};
 
