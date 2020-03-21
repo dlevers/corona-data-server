@@ -1,4 +1,4 @@
-<h1>Show Territory : "<%= @daily.territory %>"</h1>
+<h1>Show Territory : "<%= @parentTerritory %>"</h1>
 
 <html>
   <head>
@@ -10,35 +10,41 @@
       google.charts.load('current', {'packages':['corechart']});
 
       // Set a callback to run when the Google Visualization API is loaded.
-      google.charts.setOnLoadCallback( drawGraphWorld );
+      google.charts.setOnLoadCallback( drawGraphTerritories );
 
 
-      function drawGraphWorld() {
-        var data = google.visualization.arrayToDataTable([
-          ['Date', 'Active', 'Recovered', 'Deaths'],
-          <% @dailies.where( :territory => "world", :summary => 1 ).sort_by( &:date ).each do |daily| %>
-            [ "<%= daily.date %>", <%= daily.confirmed.to_i %> - <%= daily.recovered.to_i %> - <%= daily.deaths.to_i %>, <%= daily.recovered.to_i %>, <%= daily.deaths.to_i %> ],
-          <% end %>
-        ]);
+      function drawGraphTerritories() {
+        <% @uTerritories.each do |oneTerritory| %>
+            <% cleanTerritory = oneTerritory.gsub( /[^0-9a-z]/i, '' ) %>
+            var data = google.visualization.arrayToDataTable([
+                ['Date', 'Active', 'Recovered', 'Deaths'],
+                <% @dailies.where( :territory => oneTerritory ).sort_by( &:date ).each do |daily| %>
+                  [ "<%= daily.date %>", <%= daily.confirmed.to_i %> - <%= daily.recovered.to_i %> - <%= daily.deaths.to_i %>, <%= daily.recovered.to_i %>, <%= daily.deaths.to_i %> ],
+                <% end %>
+              ]);
 
-        var options = {
-          title: 'World Cases',
-          hAxis: {title: 'Date',  titleTextStyle: {color: '#333'}},
-          vAxis: {minValue: 0},
-          isStacked: true,
-          series: [
-              {color: 'yellow'},
-              {color: 'green'},
-              {color: 'red'} ]
-        };
+            var options = {
+                title: 'Cases: <%= oneTerritory %>',
+                hAxis: {title: 'Date',  titleTextStyle: {color: '#333'}},
+                vAxis: {minValue: 0},
+                isStacked: true,
+                series: [
+                    {color: 'yellow'},
+                    {color: 'green'},
+                    {color: 'red'} ]
+              };
 
-        var chart = new google.visualization.AreaChart(document.getElementById('chart_div_world'));
-        chart.draw( data, options );
+            var chart = new google.visualization.AreaChart(document.getElementById('chart_div_<%= cleanTerritory %>'));
+            chart.draw( data, options );
+        <% end %>
       }
     </script>
   </head>
 
   <body>
-    <div id="chart_div_world"></div>
+    <% @uTerritories.each do |oneTerritory| %>
+      <% cleanTerritory = oneTerritory.gsub( /[^0-9a-z]/i, '' ) %>
+      <div id="chart_div_<%= cleanTerritory %>"></div>
+    <% end %>
   </body>
 </html>
