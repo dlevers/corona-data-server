@@ -1,0 +1,44 @@
+<h1>Show Territory : "<%= @daily.territory %>"</h1>
+
+<html>
+  <head>
+    <!--Load the AJAX API-->
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <script type="text/javascript">
+
+      // Load the Visualization API and the corechart package.
+      google.charts.load('current', {'packages':['corechart']});
+
+      // Set a callback to run when the Google Visualization API is loaded.
+      google.charts.setOnLoadCallback( drawGraphWorld );
+
+
+      function drawGraphWorld() {
+        var data = google.visualization.arrayToDataTable([
+          ['Date', 'Active', 'Recovered', 'Deaths'],
+          <% @dailies.where( :territory => "world", :summary => 1 ).sort_by( &:date ).each do |daily| %>
+            [ "<%= daily.date %>", <%= daily.confirmed.to_i %> - <%= daily.recovered.to_i %> - <%= daily.deaths.to_i %>, <%= daily.recovered.to_i %>, <%= daily.deaths.to_i %> ],
+          <% end %>
+        ]);
+
+        var options = {
+          title: 'World Cases',
+          hAxis: {title: 'Date',  titleTextStyle: {color: '#333'}},
+          vAxis: {minValue: 0},
+          isStacked: true,
+          series: [
+              {color: 'yellow'},
+              {color: 'green'},
+              {color: 'red'} ]
+        };
+
+        var chart = new google.visualization.AreaChart(document.getElementById('chart_div_world'));
+        chart.draw( data, options );
+      }
+    </script>
+  </head>
+
+  <body>
+    <div id="chart_div_world"></div>
+  </body>
+</html>
