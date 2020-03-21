@@ -39,5 +39,4 @@ yarn-debug.log*
 /db
 /lib
 /log
-/test
 /tmp

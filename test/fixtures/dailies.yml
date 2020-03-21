@@ -1,0 +1,23 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  date: MyString
+  territory: MyString
+  territory-parent: MyString
+  summary: false
+  confirmed: MyString
+  recovered: MyString
+  deaths: MyString
+  latitude: 1.5
+  longitude: 1.5
+
+two:
+  date: MyString
+  territory: MyString
+  territory-parent: MyString
+  summary: false
+  confirmed: MyString
+  recovered: MyString
+  deaths: MyString
+  latitude: 1.5
+  longitude: 1.5
