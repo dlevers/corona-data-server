@@ -1,4 +1,6 @@
 class WelcomeController < ApplicationController
+  KExpectedDatestringLength = 10
+
   def index
     dataPathBase  = "/Users/dlevers/Src/Sandbox/Coronavirus19/data/JohnsHopkinsPipedream/"
     # fileName      = "2020-03-20-13.22.json"
@@ -6,14 +8,43 @@ class WelcomeController < ApplicationController
 
     Dir.foreach( dataPathBase ) do |filename|
       next if filename == '.' or filename == '..'
-      # Do work on the remaining files & directories
-      allSummary[ "Confirmed" ] += indexOneFile( dataPathBase, filename )
+      dateString    = dateFromFilename( filename )
+      puts "index: dateString=" + dateString
+      if dateString.length == KExpectedDatestringLength
+        #dailies = Daily.find( @date ).where( :date => dateString )
+        dailies = Daily.find_by( :date => dateString )
+        if !dailies
+          puts "index: ZERO dailies.length"
+        else
+          puts "index: dailies.length=" + dailies.length
+        end
+
+        # # Do work on the remaining files & directories
+        # allSummary[ "Confirmed" ] += indexOneFile( dataPathBase, filename )
+      else
+        puts "index: ERROR dateString=" + dateString
+      end
     end
+
     puts "---"
     puts "allSummary.Confirmed=" + allSummary[ "Confirmed" ].to_s
   end
 
   private
+
+  def dateFromFilename( filenameIn )
+    dateString  = filenameIn[ 0...10 ]
+    testString  = filenameIn[ /....-..-../ ]
+    puts "dateFromFilename: dateString=" + dateString + "  testString=" + testString
+
+    if dateString.eql?( testString )
+      return dateString
+    end
+
+    return nil
+  end
+
+
   def indexOneFile( pathIn, filenameIn )
     fjs = File.read( pathIn + filenameIn )
     ojs = JSON.parse( fjs )
@@ -23,9 +54,7 @@ class WelcomeController < ApplicationController
     puts "pathIn:        " + pathIn
     puts "filenameIn:    " + filenameIn
     puts "apiSourceCode: " + ojs[ "apiSourceCode" ]
-
-    puts "---"
-    puts "entry count=" + ojs[ "rawData" ].length.to_s
+    puts "entry count:   " + ojs[ "rawData" ].length.to_s
     countrySummaries  = {}
 
     puts "---"

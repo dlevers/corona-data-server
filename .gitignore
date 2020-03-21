@@ -36,7 +36,12 @@ yarn-debug.log*
 .yarn-integrity
 
 # DLE
+/app/assets
+/app/channels
+/app/controllers/concerns
+/app/mailers
 /db
 /lib
 /log
 /tmp
+/storage
