@@ -61,7 +61,7 @@ class WelcomeController < ApplicationController
     puts "pathIn:        " + pathIn
     puts "filenameIn:    " + filenameIn
     # puts "apiSourceCode: " + ojs[ "apiSourceCode" ]
-    puts "entry count:   " + ojs[ "rawData" ].length.to_s
+    # puts "entry count:   " + ojs[ "rawData" ].length.to_s
     countrySummaries  = {}
 
     puts "---"
@@ -73,16 +73,18 @@ class WelcomeController < ApplicationController
           countrySummaries[ oneRawValue[ "Country/Region" ]][ "Recovered" ] += oneRawValue[ "Recovered" ].to_i
           countrySummaries[ oneRawValue[ "Country/Region" ]][ "Deaths" ]    += oneRawValue[ "Deaths" ].to_i
 
-          latitude  = countrySummaries[ oneRawValue[ "Country/Region" ]][ "Latitude" ] * countrySummaries[ oneRawValue[ "Country/Region" ]][ "count" ]
-          latitude  += oneRawValue[ "Latitude" ].to_f
-          latitude  /= countrySummaries[ oneRawValue[ "Country/Region" ]][ "count" ] + 1
-          countrySummaries[ oneRawValue[ "Country/Region" ]][ "Latitude" ]   = latitude
-          longitude = countrySummaries[ oneRawValue[ "Country/Region" ]][ "Longitude" ] * countrySummaries[ oneRawValue[ "Country/Region" ]][ "count" ]
-          longitude += oneRawValue[ "Longitude" ].to_f
-          longitude /= countrySummaries[ oneRawValue[ "Country/Region" ]][ "count" ] + 1
-          countrySummaries[ oneRawValue[ "Country/Region" ]][ "Longitude" ]  = longitude
+          oldLatitude = countrySummaries[ oneRawValue[ "Country/Region" ]][ "Latitude" ]
+          latitude    = oldLatitude * countrySummaries[ oneRawValue[ "Country/Region" ]][ "count" ] + oneRawValue[ "Latitude" ].to_f
+          newLatitude = latitude / ( countrySummaries[ oneRawValue[ "Country/Region" ]][ "count" ] + 1 )
+          countrySummaries[ oneRawValue[ "Country/Region" ]][ "Latitude" ]   = newLatitude
+          oldLongitude  = countrySummaries[ oneRawValue[ "Country/Region" ]][ "Longitude" ]
+          longitude     = oldLongitude * countrySummaries[ oneRawValue[ "Country/Region" ]][ "count" ] + oneRawValue[ "Longitude" ].to_f
+          newLongitude = longitude / ( countrySummaries[ oneRawValue[ "Country/Region" ]][ "count" ] + 1 )
+          countrySummaries[ oneRawValue[ "Country/Region" ]][ "Longitude" ]  = newLongitude
 
           countrySummaries[ oneRawValue[ "Country/Region" ]][ "count" ]     += 1
+          puts "indexOneFile: country,state=" + oneRawValue[ "Country/Region" ] + "," + oneRawValue[ "Province/State" ] + "  old lat,long=" + oldLatitude.to_s + "," +
+                oldLongitude.to_s + "  count=" + countrySummaries[ oneRawValue[ "Country/Region" ]][ "count" ].to_s + "  new lat,long=" + newLatitude.to_s + "," + newLongitude.to_s
         else
           countrySummaries[ oneRawValue[ "Country/Region" ]] = { "count" => 1,
                                                                 "Confirmed" => oneRawValue[ "Confirmed" ].to_i,
@@ -95,7 +97,7 @@ class WelcomeController < ApplicationController
                           :summary => false, :confirmed => oneRawValue[ "Confirmed" ], :recovered => oneRawValue[ "Recovered" ],
                           :deaths => oneRawValue[ "Deaths" ], :latitude => oneRawValue[ "Latitude" ].to_f, :longitude => oneRawValue[ "Longitude" ].to_f )
       else
-        puts "one.Country/Region=" + oneRawValue[ "Country/Region" ] + "  confirmed=" + oneRawValue[ "Confirmed" ]
+        # puts "one.Country/Region=" + oneRawValue[ "Country/Region" ] + "  confirmed=" + oneRawValue[ "Confirmed" ]
         #totalConfirmed  += oneRawValue[ "Confirmed" ].to_i
         @daily  = Daily.new( :date => datestringIn, :territory => oneRawValue[ "Country/Region" ], :territoryparent => KTerritoryWorld,
                           :summary => false, :confirmed => oneRawValue[ "Confirmed" ], :recovered => oneRawValue[ "Recovered" ],
@@ -111,9 +113,9 @@ class WelcomeController < ApplicationController
 
     # Now for all those that saw accumulated province/state(s)
     puts "---"
-    puts "countries with provinces/states"
+    puts "indexOneFile: countries with provinces/states"
     countrySummaries.each do |oneKey, oneValue|
-      puts "one.accumulated.Country/Region=" + oneKey + " total confirmed=" + countrySummaries[ oneKey ][ "Confirmed" ].to_s
+      puts "indexOneFile: one.accumulated.Country/Region=" + oneKey + " total confirmed=" + countrySummaries[ oneKey ][ "Confirmed" ].to_s
 
       @daily  = Daily.new( :date => datestringIn, :territory => oneKey, :territoryparent => KTerritoryWorld, :summary => true, :confirmed => oneValue[ "Confirmed" ].to_s,
                           :recovered => oneValue[ "Recovered" ].to_s, :deaths => oneValue[ "Deaths" ].to_s, :latitude => oneValue[ "Latitude" ],
@@ -126,7 +128,7 @@ class WelcomeController < ApplicationController
       totals[ "Deaths" ]    += countrySummaries[ oneKey ][ "Deaths" ]
     end
 
-    puts "index: totals.Confirmed,Recovered,Deaths=" + totals[ "Confirmed" ].to_s + "," + totals[ "Recovered" ].to_s + "," + totals[ "Deaths" ].to_s
+    puts "indexOneFile: totals.Confirmed,Recovered,Deaths=" + totals[ "Confirmed" ].to_s + "," + totals[ "Recovered" ].to_s + "," + totals[ "Deaths" ].to_s
     @daily  = Daily.new( :date => datestringIn, :territory => KTerritoryWorld, :territoryparent => "(none)", :summary => true, :confirmed => totals[ "Confirmed" ].to_s,
                         :recovered => totals[ "Recovered" ].to_s, :deaths => totals[ "Deaths" ].to_s, :latitude => 0.0, :longitude => 0.0 )
     @daily.save

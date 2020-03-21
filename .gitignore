@@ -46,3 +46,11 @@ yarn-debug.log*
 /log
 /tmp
 /storage
+/test/channels
+/test/controllers
+/test/fixtures
+/test/helpers
+/test/integration
+/test/mailers
+/test/models
+/test/system
