@@ -40,6 +40,7 @@ yarn-debug.log*
 /app/channels
 /app/controllers/concerns
 /app/mailers
+/config
 /db
 /lib
 /log
