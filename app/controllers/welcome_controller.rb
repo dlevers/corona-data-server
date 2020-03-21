@@ -27,11 +27,16 @@ class WelcomeController < ApplicationController
       end
     end
 
-    puts "---"
-    puts "allSummary.Confirmed=" + allSummaryConfirmed.to_s
+    puts "index: allSummary.Confirmed=" + allSummaryConfirmed.to_s
   
     @dailies = Daily.all
   end
+
+
+  # def show
+  #   @daily = Daily.find( params[ :id ])
+  #   puts "show: daily.territory=" + @daily.territory
+  # end
 
 
   private

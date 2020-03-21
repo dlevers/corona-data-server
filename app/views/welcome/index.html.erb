@@ -41,5 +41,6 @@
   <body>
     <!--Div that will hold the pie chart-->
     <div id="chart_div_world"></div>
+    <%= link_to 'Show', daily_path( @dailies.find_by( :territory => "world" )) %>
   </body>
 </html>
