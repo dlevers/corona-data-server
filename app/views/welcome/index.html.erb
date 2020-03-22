@@ -21,6 +21,7 @@
           <% end %>
         ]);
 
+        // Add chartArea.width at (48%) so that my labels do not get truncated
         var options = {
           title: 'World Cases',
           hAxis: {title: 'Date',  titleTextStyle: {color: '#333'}},
@@ -29,18 +30,25 @@
           series: [
               {color: 'yellow'},
               {color: 'green'},
-              {color: 'red'} ]
+              {color: 'red'} ],
+          chartArea: { width: "48%" }
         };
 
         var chart = new google.visualization.AreaChart(document.getElementById('chart_div_world'));
+        // google.visualization.events.addListener( chart, 'click', clickHandler );
+
         chart.draw( data, options );
       }
+
+      // function clickHandler( event ) {
+      //   alert( 'clickHandler: event=' + JSON.stringify( event ));
+      // }
     </script>
   </head>
 
   <body>
     <!--Div that will hold the pie chart-->
-    <div id="chart_div_world"></div>
-    <%= link_to 'Show', daily_path( @dailies.find_by( :territory => "world" )) %>
+    <div  style="display: inline-block"  id="chart_div_world"></div>
+    <%= link_to 'Drilldown : World', daily_path( @dailies.find_by( :territory => "world" )) %>
   </body>
 </html>

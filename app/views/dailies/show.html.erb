@@ -23,6 +23,7 @@
                 <% end %>
               ]);
 
+            // Add chartArea.width at (48%) so that my labels do not get truncated
             var options = {
                 title: 'Cases: <%= oneTerritory %>',
                 hAxis: {title: 'Date',  titleTextStyle: {color: '#333'}},
@@ -31,11 +32,14 @@
                 series: [
                     {color: 'yellow'},
                     {color: 'green'},
-                    {color: 'red'} ]
+                    {color: 'red'} ],
+                chartArea: { width: "48%" }
               };
 
             var chart = new google.visualization.AreaChart(document.getElementById('chart_div_<%= cleanTerritory %>'));
             chart.draw( data, options );
+
+
         <% end %>
       }
     </script>
@@ -44,7 +48,7 @@
   <body>
     <% @uTerritories.each do |oneTerritory| %>
       <% cleanTerritory = oneTerritory.gsub( /[^0-9a-z]/i, '' ) %>
-      <div id="chart_div_<%= cleanTerritory %>"></div>
+      <div  style="display: inline-block"  id="chart_div_<%= cleanTerritory %>"></div>
     <% end %>
   </body>
 </html>
