@@ -49,6 +49,7 @@
     <% @uTerritories.each do |oneTerritory| %>
       <% cleanTerritory = oneTerritory.gsub( /[^0-9a-z]/i, '' ) %>
       <div  style="display: inline-block"  id="chart_div_<%= cleanTerritory %>"></div>
+      <%= link_to 'Drilldown : ' + oneTerritory, daily_path( @dailies.find_by( :territory => oneTerritory )) %>
     <% end %>
   </body>
 </html>
