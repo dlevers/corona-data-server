@@ -17,38 +17,42 @@
         var data = google.visualization.arrayToDataTable([
           ['Date', 'Active', 'Recovered', 'Deaths'],
           <% @dailies.where( :territory => "world", :summary => 1 ).sort_by( &:date ).each do |daily| %>
-            [ "<%= daily.date %>", <%= daily.confirmed.to_i %> - <%= daily.recovered.to_i %> - <%= daily.deaths.to_i %>, <%= daily.recovered.to_i %>, <%= daily.deaths.to_i %> ],
+            [ "<%= daily.date[ 5..-1 ] %>", <%= daily.confirmed.to_i %> - <%= daily.recovered.to_i %> - <%= daily.deaths.to_i %>, <%= daily.recovered.to_i %>, <%= daily.deaths.to_i %> ],
           <% end %>
         ]);
 
         // Add chartArea.width at (48%) so that my labels do not get truncated
         var options = {
           title: 'World Cases',
-          hAxis: {title: 'Date',  titleTextStyle: {color: '#333'}},
+          hAxis: { title: 'Date',
+                titleTextStyle: { color: '#333' },
+                slantedText: true,
+                slantedTextAngle: 90 },
           vAxis: {minValue: 0},
           isStacked: true,
           series: [
               {color: 'yellow'},
               {color: 'green'},
               {color: 'red'} ],
-          chartArea: { width: "48%" }
+          chartArea: { width: "48%",
+                    height: "55%" }
         };
 
         var chart = new google.visualization.AreaChart(document.getElementById('chart_div_world'));
-        // google.visualization.events.addListener( chart, 'click', clickHandler );
+        google.visualization.events.addListener( chart, 'click', clickHandler_world );
 
         chart.draw( data, options );
       }
 
-      // function clickHandler( event ) {
-      //   alert( 'clickHandler: event=' + JSON.stringify( event ));
-      // }
+      function clickHandler_world( event ) {
+        //alert( 'clickHandler: event=' + JSON.stringify( event ));
+        window.location.href = '<%= daily_path( @dailies.find_by( :territory => "world" )) %>';
+      }
     </script>
   </head>
 
   <body>
     <!--Div that will hold the pie chart-->
     <div  style="display: inline-block"  id="chart_div_world"></div>
-    <%= link_to 'Drilldown : World', daily_path( @dailies.find_by( :territory => "world" )) %>
   </body>
 </html>

@@ -41,6 +41,7 @@ yarn-debug.log*
 /app/controllers/concerns
 /app/jobs
 /app/mailers
+/app/models/concerns
 /bin
 /db
 /lib
@@ -56,3 +57,4 @@ yarn-debug.log*
 /test/models
 /test/system
 /vendor
+yarn.lock

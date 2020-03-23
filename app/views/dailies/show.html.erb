@@ -19,27 +19,34 @@
             var data = google.visualization.arrayToDataTable([
                 ['Date', 'Active', 'Recovered', 'Deaths'],
                 <% @dailies.where( :territory => oneTerritory ).sort_by( &:date ).each do |daily| %>
-                  [ "<%= daily.date %>", <%= daily.confirmed.to_i %> - <%= daily.recovered.to_i %> - <%= daily.deaths.to_i %>, <%= daily.recovered.to_i %>, <%= daily.deaths.to_i %> ],
+                  [ "<%= daily.date[ 5..-1 ] %>", <%= daily.confirmed.to_i %> - <%= daily.recovered.to_i %> - <%= daily.deaths.to_i %>, <%= daily.recovered.to_i %>, <%= daily.deaths.to_i %> ],
                 <% end %>
               ]);
 
             // Add chartArea.width at (48%) so that my labels do not get truncated
             var options = {
                 title: 'Cases: <%= oneTerritory %>',
-                hAxis: {title: 'Date',  titleTextStyle: {color: '#333'}},
+                hAxis: { title: 'Date',
+                        titleTextStyle: { color: '#333' },
+                        slantedText: true,
+                        slantedTextAngle: 90 },
                 vAxis: {minValue: 0},
                 isStacked: true,
                 series: [
                     {color: 'yellow'},
                     {color: 'green'},
                     {color: 'red'} ],
-                chartArea: { width: "48%" }
+                chartArea: { width: "48%",
+                      height: "55%" }
               };
 
             var chart = new google.visualization.AreaChart(document.getElementById('chart_div_<%= cleanTerritory %>'));
+            google.visualization.events.addListener( chart, 'click', clickHandler_<%= cleanTerritory %> );
             chart.draw( data, options );
 
-
+            function clickHandler_<%= cleanTerritory %>( event ) {
+              window.location.href = '<%= daily_path( @dailies.find_by( :territory => oneTerritory )) %>';
+            }
         <% end %>
       }
     </script>
@@ -48,8 +55,7 @@
   <body>
     <% @uTerritories.each do |oneTerritory| %>
       <% cleanTerritory = oneTerritory.gsub( /[^0-9a-z]/i, '' ) %>
-      <div  style="display: inline-block"  id="chart_div_<%= cleanTerritory %>"></div>
-      <%= link_to 'Drilldown : ' + oneTerritory, daily_path( @dailies.find_by( :territory => oneTerritory )) %>
+      <div  style="display: inline-block"  id="chart_div_<%= cleanTerritory %>"  width=50%> </div>
     <% end %>
   </body>
 </html>
