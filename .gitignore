@@ -42,7 +42,6 @@ yarn-debug.log*
 /app/jobs
 /app/mailers
 /bin
-/config
 /db
 /lib
 /log
