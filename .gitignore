@@ -39,7 +39,9 @@ yarn-debug.log*
 /app/assets
 /app/channels
 /app/controllers/concerns
+/app/jobs
 /app/mailers
+/bin
 /config
 /db
 /lib
@@ -54,3 +56,4 @@ yarn-debug.log*
 /test/mailers
 /test/models
 /test/system
+/vendor
