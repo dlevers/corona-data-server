@@ -63,25 +63,23 @@ class WelcomeController < ApplicationController
     fjs = File.read( pathIn + filenameIn )
     ojs = JSON.parse( fjs )
 
-    totals  = { "Confirmed" => 0,
-                "Recovered" => 0,
-                "Deaths" => 0 }
-
     puts "indexOneFile: pathIn:        " + pathIn
     puts "indexOneFile: filenameIn:    " + filenameIn
     @stateSummaries   = {}
     @countrySummaries = {}
+    @worldTotals  = { "Confirmed" => 0,
+                    "Recovered" => 0,
+                    "Deaths" => 0 }
 
-    # puts "indexOneFile: standalone countries"
+    # Process every record for the giving datestring (corresponding to an input JSON file).
     ojs[ "rawData" ].each do |oneRawValue|
-      # puts "indexOneFile: oneRawValue - " + oneRawValue.to_s
-      #if oneRawValue[ "Province/State" ].length > 0
       versionedFields = { KKeyCountryRegionA => "",
                         KKeyProvinceStateA => "",
                         KKeyAdmin2b => "",
                         KKeyLatitudeA => 0.0,
                         KKeyLongitudeA => 0.0 }
 
+      # Extract values from keys that have changed name over time
       if oneRawValue.key?( KKeyCountryRegionA )
         versionedFields[ KKeyCountryRegionA ] = oneRawValue[ KKeyCountryRegionA ]
       elsif oneRawValue.key?( KKeyCountryRegionB )
@@ -119,6 +117,25 @@ class WelcomeController < ApplicationController
         puts "indexOneFile: UNKNOWN KKeyLongitude in oneRawValue - " + oneRawValue.to_s
       end
 
+      # Sometimes we see some entries with State and Country equal, like this ...:
+      #   {
+      #     "Province/State":"US",
+      #     "Country/Region":"US",
+      #     "Last Update":"2020-03-19T19:13:18",
+      #     "Confirmed":"1",
+      #     "Deaths":"0",
+      #     "Recovered":"108",
+      #     "Latitude":"37.0902",
+      #     "Longitude":"-95.7129"
+      #  },
+      # ... so fix up the Province in this case.  Else we save off a territory that matches a country when it should be
+      # a state, and other things break down.
+      if versionedFields[ KKeyCountryRegionA ] == versionedFields[ KKeyProvinceStateA ]
+        versionedFields[ KKeyProvinceStateA ] = versionedFields[ KKeyProvinceStateA ] + "_ProvSt"
+        puts "indexOneFile: fixup KKeyProvinceStateA to " + versionedFields[ KKeyProvinceStateA ]
+      end
+
+      # index the data at its smallest geographics area (county, state, country)
       @daily  = nil
       if versionedFields[ KKeyAdmin2b ].length > 0
         @daily  = indexOnAdmin2( datestringIn, versionedFields, oneRawValue )
@@ -128,10 +145,11 @@ class WelcomeController < ApplicationController
         @daily  = indexOnCountryRegion( datestringIn, versionedFields, oneRawValue )
       end
 
+      # save the record formatted for our db
       @daily.save
     end
 
-    # Summarize accumulated states
+    # Above indexing on counties produces stateSummaries that we can now push to our db
     puts "indexOneFile: states with counties"
     @stateSummaries.each do |oneKey, oneValue|
       puts "indexOneFile: one.accumulated.state=" + oneKey + " total confirmed=" + @stateSummaries[ oneKey ][ "Confirmed" ].to_s
@@ -141,10 +159,7 @@ class WelcomeController < ApplicationController
                           :longitude => oneValue[ "Longitude" ] )
       @daily.save
 
-      # # totalConfirmed += countrySummaries[ oneKey ][ "Confirmed" ]
-      # @countrySummaries[ "Confirmed" ] += countrySummaries[ oneKey ][ "Confirmed" ]
-      # totals[ "Recovered" ] += countrySummaries[ oneKey ][ "Recovered" ]
-      # totals[ "Deaths" ]    += countrySummaries[ oneKey ][ "Deaths" ]
+      # the stateSummaries produced from indexing on counties are not yet counted in their parent countries; do that here
       accumulateOnState( datestringIn, oneKey, oneValue )
     end
 
@@ -153,20 +168,26 @@ class WelcomeController < ApplicationController
     @countrySummaries.each do |oneKey, oneValue|
       puts "indexOneFile: datestringIn=" + datestringIn + "  one.accumulated.Country/Region=" + oneKey + " total confirmed=" + @countrySummaries[ oneKey ][ "Confirmed" ].to_s
 
-      @daily  = Daily.new( :date => datestringIn, :territory => oneKey, :territoryparent => KTerritoryWorld, :summary => true, :confirmed => oneValue[ "Confirmed" ].to_s,
-                          :recovered => oneValue[ "Recovered" ].to_s, :deaths => oneValue[ "Deaths" ].to_s, :latitude => oneValue[ "Latitude" ],
-                          :longitude => oneValue[ "Longitude" ] )
-      @daily.save
+      # United Kingdom and Netherlands appear to have both standalone summary records and sub-territory records, so
+      # prefer the (already saved) summary if it is there
+      existing  = Daily.find_by( :date => datestringIn, :territory => oneKey )
+      if existing
+        puts "indexOneFile: in countrySummaries, SKIP for existing datestringIn=" + datestringIn + "  territory=" + oneKey + "  existing=" + existing.to_s
+      else
+        @daily  = Daily.new( :date => datestringIn, :territory => oneKey, :territoryparent => KTerritoryWorld, :summary => true, :confirmed => oneValue[ "Confirmed" ].to_s,
+                            :recovered => oneValue[ "Recovered" ].to_s, :deaths => oneValue[ "Deaths" ].to_s, :latitude => oneValue[ "Latitude" ],
+                            :longitude => oneValue[ "Longitude" ] )
+        @daily.save
 
-      # totalConfirmed += countrySummaries[ oneKey ][ "Confirmed" ]
-      totals[ "Confirmed" ] += @countrySummaries[ oneKey ][ "Confirmed" ]
-      totals[ "Recovered" ] += @countrySummaries[ oneKey ][ "Recovered" ]
-      totals[ "Deaths" ]    += @countrySummaries[ oneKey ][ "Deaths" ]
+        @worldTotals[ "Confirmed" ] += @countrySummaries[ oneKey ][ "Confirmed" ]
+        @worldTotals[ "Recovered" ] += @countrySummaries[ oneKey ][ "Recovered" ]
+        @worldTotals[ "Deaths" ]    += @countrySummaries[ oneKey ][ "Deaths" ]
+      end
     end
 
     # Summarize the world
-    @daily  = Daily.new( :date => datestringIn, :territory => KTerritoryWorld, :territoryparent => "(none)", :summary => true, :confirmed => totals[ "Confirmed" ].to_s,
-                        :recovered => totals[ "Recovered" ].to_s, :deaths => totals[ "Deaths" ].to_s, :latitude => 0.0, :longitude => 0.0 )
+    @daily  = Daily.new( :date => datestringIn, :territory => KTerritoryWorld, :territoryparent => "(none)", :summary => true, :confirmed => @worldTotals[ "Confirmed" ].to_s,
+                        :recovered => @worldTotals[ "Recovered" ].to_s, :deaths => @worldTotals[ "Deaths" ].to_s, :latitude => 0.0, :longitude => 0.0 )
     @daily.save
   end
 
@@ -283,20 +304,20 @@ class WelcomeController < ApplicationController
                           :summary => false, :confirmed => rawDataIn[ "Confirmed" ], :recovered => rawDataIn[ "Recovered" ],
                           :deaths => rawDataIn[ "Deaths" ], :latitude => versionedFieldsIn[ KKeyLatitudeA ].to_f, :longitude => versionedFieldsIn[ KKeyLongitudeA ].to_f )
 
-    # @totals[ "Confirmed" ] += rawDataIn[ "Confirmed" ].to_i
-    # @totals[ "Recovered" ] += rawDataIn[ "Recovered" ].to_i
-    # @totals[ "Deaths" ]    += rawDataIn[ "Deaths" ].to_i
-    if @countrySummaries.key?( versionedFieldsIn[ KKeyCountryRegionA ])
-      puts "indexOnCountryRegion: UNEXPECTED KKeyCountryRegion=" + versionedFieldsIn[ KKeyCountryRegionA ]
-    end
+    @worldTotals[ "Confirmed" ] += rawDataIn[ "Confirmed" ].to_i
+    @worldTotals[ "Recovered" ] += rawDataIn[ "Recovered" ].to_i
+    @worldTotals[ "Deaths" ]    += rawDataIn[ "Deaths" ].to_i
+    # if @countrySummaries.key?( versionedFieldsIn[ KKeyCountryRegionA ])
+    #   puts "indexOnCountryRegion: UNEXPECTED KKeyCountryRegion=" + versionedFieldsIn[ KKeyCountryRegionA ]
+    # end
 
-    @countrySummaries[ versionedFieldsIn[ KKeyCountryRegionA ]] = { "count" => 1,
-                                      "Confirmed" => rawDataIn[ "Confirmed" ].to_i,
-                                      "Recovered" => rawDataIn[ "Recovered" ].to_i,
-                                      "Deaths" => rawDataIn[ "Deaths" ].to_i,
-                                      "Parent" => KTerritoryWorld,
-                                      KKeyLatitudeA => versionedFieldsIn[ KKeyLatitudeA ].to_f,
-                                      KKeyLongitudeA => versionedFieldsIn[ KKeyLongitudeA ].to_f }
+    # @countrySummaries[ versionedFieldsIn[ KKeyCountryRegionA ]] = { "count" => 1,
+    #                                   "Confirmed" => rawDataIn[ "Confirmed" ].to_i,
+    #                                   "Recovered" => rawDataIn[ "Recovered" ].to_i,
+    #                                   "Deaths" => rawDataIn[ "Deaths" ].to_i,
+    #                                   "Parent" => KTerritoryWorld,
+    #                                   KKeyLatitudeA => versionedFieldsIn[ KKeyLatitudeA ].to_f,
+    #                                   KKeyLongitudeA => versionedFieldsIn[ KKeyLongitudeA ].to_f }
 
     return newDaily
   end
