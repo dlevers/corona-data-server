@@ -36,9 +36,6 @@ yarn-debug.log*
 .yarn-integrity
 
 # DLE
-/bin
-/db
-/lib
 /log
 /tmp
 /storage
