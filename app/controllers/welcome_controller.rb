@@ -13,7 +13,7 @@ class WelcomeController < ApplicationController
   KKeyAdmin2b               = "Admin2"
 
   def index
-    dataPathBase        = "/Users/dlevers/Src/Sandbox/Coronavirus19/data/JohnsHopkinsPipedream/"
+    dataPathBase  = ENV[ 'DLE_CORONA_SOURCEDATA_PATH' ] || "/Users/dlevers/Src/Sandbox/Coronavirus19/data/JohnsHopkinsPipedream/"
     allSummaryConfirmed = 0
 
     Dir.foreach( dataPathBase ) do |filename|
@@ -60,7 +60,7 @@ class WelcomeController < ApplicationController
 
 
   def indexOneFile( datestringIn, pathIn, filenameIn )
-    fjs = File.read( pathIn + filenameIn )
+    fjs = File.read( File.join( pathIn, filenameIn ))
     ojs = JSON.parse( fjs )
 
     puts "indexOneFile: pathIn:        " + pathIn
