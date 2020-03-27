@@ -135,6 +135,19 @@ class WelcomeController < ApplicationController
         puts "indexOneFile: fixup KKeyProvinceStateA to " + versionedFields[ KKeyProvinceStateA ]
       end
 
+      # Patch changing names
+      useCountry  = versionedFields[ KKeyCountryRegionA ]
+      if ( useCountry == "Cruise Ship" ) || ( useCountry == "Diamond Princess" )
+        useCountry  = "Ship - Diamond Princess"
+      end
+      versionedFields[ KKeyCountryRegionA ] = useCountry
+
+      useState  = versionedFields[ KKeyProvinceStateA ]
+      if ( useState == "Cruise Ship" ) || ( useState == "Diamond Princess" )
+        useState  = "Ship - Diamond Princess"
+      end
+      versionedFields[ KKeyProvinceStateA ] = useState
+
       # index the data at its smallest geographics area (county, state, country)
       @daily  = nil
       if versionedFields[ KKeyAdmin2b ].length > 0
