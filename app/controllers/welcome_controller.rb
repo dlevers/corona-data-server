@@ -15,6 +15,7 @@ class WelcomeController < ApplicationController
   def index
     dataPathBase  = ENV[ 'DLE_CORONA_SOURCEDATA_PATH' ] || "/Users/dlevers/Src/Sandbox/Coronavirus19/data/JohnsHopkinsPipedream/"
     allSummaryConfirmed = 0
+    puts "index: dataPathBase=" + dataPathBase
 
     Dir.foreach( dataPathBase ) do |filename|
       next if filename == '.' or filename == '..'
