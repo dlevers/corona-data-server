@@ -12,6 +12,8 @@ class WelcomeController < ApplicationController
   KKeyLongitudeB            = "Long_"
   KKeyAdmin2b               = "Admin2"
 
+  KValueProvinceStateRecovered  = "Recovered"
+
   def index
     dataPathBase  = ENV[ 'DLE_CORONA_SOURCEDATA_PATH' ] || "/Users/dlevers/Src/Sandbox/Coronavirus19/data/JohnsHopkinsPipedream/"
     allSummaryConfirmed = 0
@@ -71,6 +73,7 @@ class WelcomeController < ApplicationController
     @worldTotals  = { "Confirmed" => 0,
                     "Recovered" => 0,
                     "Deaths" => 0 }
+    countryRecoveries = {}
 
     # Process every record for the giving datestring (corresponding to an input JSON file).
     ojs[ "rawData" ].each do |oneRawValue|
@@ -159,6 +162,15 @@ class WelcomeController < ApplicationController
         @daily  = indexOnCountryRegion( datestringIn, versionedFields, oneRawValue )
       end
 
+      # Some countries seem to have Recovered numbers as a Province
+      if versionedFields[ KKeyProvinceStateA ] == KValueProvinceStateRecovered
+        if countryRecoveries.key?( versionedFields[ KKeyCountryRegionA ])
+          puts "indexOneFile WARNING country=#{versionedFields[ KKeyCountryRegionA ]}  already in countryRecoveries"
+        end
+
+        countryRecoveries[ versionedFields[ KKeyCountryRegionA ]] = oneRawValue[ "Recovered" ].to_i
+      end
+
       # save the record formatted for our db
       @daily.save
     end
@@ -188,6 +200,14 @@ class WelcomeController < ApplicationController
       if existing
         puts "indexOneFile: in countrySummaries, SKIP for existing datestringIn=" + datestringIn + "  territory=" + oneKey + "  existing=" + existing.to_s
       else
+        if countryRecoveries.key?( oneKey )
+          puts "indexOneFile: country=#{oneKey} in countryRecoveries with recoveredCount=#{countryRecoveries[ oneKey ]}  oneValue.Recovered=#{oneValue[ "Recovered" ]}"
+          if 0 == oneValue[ "Recovered" ]
+            puts "indexOneFile: Oerride recoveries for country=#{oneKey} with countryRecoveries.count=#{countryRecoveries[ oneKey ]}"
+            oneValue[ "Recovered" ] = countryRecoveries[ oneKey ]
+          end
+        end
+
         @daily  = Daily.new( :date => datestringIn, :territory => oneKey, :territoryparent => KTerritoryWorld, :summary => true, :confirmed => oneValue[ "Confirmed" ].to_s,
                             :recovered => oneValue[ "Recovered" ].to_s, :deaths => oneValue[ "Deaths" ].to_s, :latitude => oneValue[ "Latitude" ],
                             :longitude => oneValue[ "Longitude" ] )
