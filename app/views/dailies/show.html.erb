@@ -67,12 +67,12 @@
 
         var chart = new google.visualization.GeoChart(document.getElementById('map_div'));
 
-        var altData = google.visualization.arrayToDataTable([
-          ['Latitude', 'Longitude', 'Popularity'],
-          [ 28.1, -81.1, 300 ],
-        ]);
-        // chart.draw(data, options);
-        chart.draw(altData, options);
+        // var altData = google.visualization.arrayToDataTable([
+        //   ['Latitude', 'Longitude', 'Popularity'],
+        //   [ 28.1, -81.1, 300 ],
+        // ]);
+        // chart.draw(altData, options);
+        chart.draw(data, options);
       }
 
       function lookupRegion(territoryIn) {
@@ -86,12 +86,19 @@
           // case "Florida":
           //   territoryOut  = "Florida";
           //   break;
+          case "New York":
+            territoryOut  = "US-NY";
+            break;
+
+
           case "India":
             territoryOut  = "IN";
             break;
           case "US":
             territoryOut  = "US";
             break;
+
+
           case "World":
             territoryOut = "world";
             break;
