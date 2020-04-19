@@ -54,11 +54,12 @@
 
         var regionToUse     = lookupRegion("<%= @parentTerritory %>");
         var resolutionToUse = "provinces";
+        //var resolutionToUse = "metros";
         if ( regionToUse == "world" ) {
           resolutionToUse = "countries";
         }
         console.log( "drawRegionsMap: regionToUse=" + regionToUse + "  resolutionToUse=" + resolutionToUse )
-        var options = { colorAxis: {colors: ['yellow', 'red']},
+        var options = { colorAxis: {colors: [ 'blue', 'green', 'yellow', 'orange', 'red' ]},
           displayMode: 'markers',
           region: regionToUse,
           resolution: resolutionToUse,
@@ -76,9 +77,9 @@
       }
 
       function lookupRegion(territoryIn) {
-        // territoryOut = 'world'
+        territoryOut = 'world'
         // territoryOut = territoryIn;
-        territoryOut = "US"
+        // territoryOut = "US"
         switch(territoryIn) {
           case "Florida":
             territoryOut  = "US-FL";
