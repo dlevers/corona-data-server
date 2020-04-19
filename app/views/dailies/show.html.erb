@@ -11,14 +11,14 @@
       // Set a callback to run when the Google Visualization API is loaded.
       google.charts.setOnLoadCallback( drawGraphTerritories );
 
-      function thenDrawTheMap() {
+      // function thenDrawTheMap() {
         // For the map
         google.charts.load('current', {'packages':['geochart'],
             'mapsApiKey': 'AIzaSyAD-VN-foLOWEfE6M-aV87IwukEr5ZduPY'
           });
         //'mapsApiKey': 'AIzaSyD-9tSrke72PouQMnMX-a7eZSW0jkFMBWY'
         google.charts.setOnLoadCallback( drawRegionsMap );
-      }
+      // }
 
       //
       // drawRegionsMap
@@ -52,26 +52,40 @@
             <% end %>
           ]);
 
-        var regionToUse = lookupRegion("<%= @parentTerritory %>");
-        console.log( "drawRegionsMap: regionToUse=" + regionToUse )
+        var regionToUse     = lookupRegion("<%= @parentTerritory %>");
+        var resolutionToUse = "provinces";
+        if ( regionToUse == "world" ) {
+          resolutionToUse = "countries";
+        }
+        console.log( "drawRegionsMap: regionToUse=" + regionToUse + "  resolutionToUse=" + resolutionToUse )
         var options = { colorAxis: {colors: ['yellow', 'red']},
           displayMode: 'markers',
           region: regionToUse,
+          resolution: resolutionToUse,
           sizeAxis: { minValue: 0 },
         };
 
         var chart = new google.visualization.GeoChart(document.getElementById('map_div'));
 
-        chart.draw(data, options);
+        var altData = google.visualization.arrayToDataTable([
+          ['Latitude', 'Longitude', 'Popularity'],
+          [ 28.1, -81.1, 300 ],
+        ]);
+        // chart.draw(data, options);
+        chart.draw(altData, options);
       }
 
       function lookupRegion(territoryIn) {
-        territoryOut = 'world'
+        // territoryOut = 'world'
         // territoryOut = territoryIn;
+        territoryOut = "US"
         switch(territoryIn) {
           case "Florida":
             territoryOut  = "US-FL";
             break;
+          // case "Florida":
+          //   territoryOut  = "Florida";
+          //   break;
           case "India":
             territoryOut  = "IN";
             break;
@@ -127,7 +141,7 @@
             }
         <% end %>
 
-        thenDrawTheMap();
+        // thenDrawTheMap();
       }
     </script>
   </head>
