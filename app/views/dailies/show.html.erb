@@ -11,35 +11,81 @@
       // Set a callback to run when the Google Visualization API is loaded.
       google.charts.setOnLoadCallback( drawGraphTerritories );
 
-      // For the map
-      google.charts.load('current', {'packages':['geochart'],
-          'mapsApiKey': 'AIzaSyAD-VN-foLOWEfE6M-aV87IwukEr5ZduPY'
-        });
-      //'mapsApiKey': 'AIzaSyD-9tSrke72PouQMnMX-a7eZSW0jkFMBWY'
-      google.charts.setOnLoadCallback( drawRegionsMap );
-
+      function thenDrawTheMap() {
+        // For the map
+        google.charts.load('current', {'packages':['geochart'],
+            'mapsApiKey': 'AIzaSyAD-VN-foLOWEfE6M-aV87IwukEr5ZduPY'
+          });
+        //'mapsApiKey': 'AIzaSyD-9tSrke72PouQMnMX-a7eZSW0jkFMBWY'
+        google.charts.setOnLoadCallback( drawRegionsMap );
+      }
 
       //
       // drawRegionsMap
       //
       function drawRegionsMap() {
+        // by lat,long
+        // var data = google.visualization.arrayToDataTable([
+        //   ['Latitude', 'Longitude', 'Popularity'],
+        //   [28.1, -81.1, 200],
+        //   [29.1, -82.1, 300],
+        //   [30.1, -83.1, 400],
+        //   [31.1, -84.1, 500],
+        //   [32.1, -85.1, 600],
+        //   [33.1, -86.1, 700]
+        // ]);
+        //  latestForTerritory = @dailies.where( :territory => oneTerritory ).sort_by( &:date )[-1]
         var data = google.visualization.arrayToDataTable([
-          ['Country', 'Popularity'],
-          ['Germany', 200],
-          ['United States', 300],
-          ['Brazil', 400],
-          ['Canada', 500],
-          ['France', 600],
-          ['RU', 700]
-        ]);
+            ['Latitude', 'Longitude', 'Popularity'],
+            <% @uTerritories.each do |oneTerritory| %>
+              <% latestDate = "00-00" %>
+              <% latestRecord = nil %>
+              <% @dailies.where( :territory => oneTerritory ).sort_by( &:date ).each do |daily| %>
+                <% sampleDate = daily.date[ 5..-1 ] %>
+                <% if sampleDate > latestDate %>
+                  <% latestDate = sampleDate %>
+                  <% latestRecord = daily %>
+                <% end %>
+              <% end %>
+              <% countToUse = latestRecord.confirmed.to_i - latestRecord.recovered.to_i - latestRecord.deaths.to_i %>
+              [<%= latestRecord.latitude %>, <%= latestRecord.longitude %>, <%= countToUse %>],
+            <% end %>
+          ]);
 
-        var options = {};
+        var regionToUse = lookupRegion("<%= @parentTerritory %>");
+        console.log( "drawRegionsMap: regionToUse=" + regionToUse )
+        var options = { colorAxis: {colors: ['yellow', 'red']},
+          displayMode: 'markers',
+          region: regionToUse,
+          sizeAxis: { minValue: 0 },
+        };
 
         var chart = new google.visualization.GeoChart(document.getElementById('map_div'));
 
         chart.draw(data, options);
       }
 
+      function lookupRegion(territoryIn) {
+        territoryOut = 'world'
+        // territoryOut = territoryIn;
+        switch(territoryIn) {
+          case "Florida":
+            territoryOut  = "US-FL";
+            break;
+          case "India":
+            territoryOut  = "IN";
+            break;
+          case "US":
+            territoryOut  = "US";
+            break;
+          case "World":
+            territoryOut = "world";
+            break;
+          default:
+            console.log("lookupRegion: UNKNOWN territoryIn=" + territoryIn);
+        }
+        return territoryOut;
+      }
 
       //
       // drawGraphTerritories
@@ -80,6 +126,8 @@
               window.location.href = '<%= daily_path( @dailies.find_by( :territory => oneTerritory )) %>';
             }
         <% end %>
+
+        thenDrawTheMap();
       }
     </script>
   </head>
