@@ -232,17 +232,22 @@ class WelcomeController < ApplicationController
       @stateSummaries[ versionedFieldsIn[ KKeyProvinceStateA ]][ "Recovered" ] += rawDataIn[ "Recovered" ].to_i
       @stateSummaries[ versionedFieldsIn[ KKeyProvinceStateA ]][ "Deaths" ]    += rawDataIn[ "Deaths" ].to_i
 
-      oldLatitude = @stateSummaries[ versionedFieldsIn[ KKeyProvinceStateA ]][ KKeyLatitudeA ]
-
-      latitude      = oldLatitude * @stateSummaries[ versionedFieldsIn[ KKeyProvinceStateA ]][ "count" ] + versionedFieldsIn[ KKeyLatitudeA ].to_f
-      newLatitude   = latitude / ( @stateSummaries[ versionedFieldsIn[ KKeyProvinceStateA ]][ "count" ] + 1 )
-      @stateSummaries[ versionedFieldsIn[ KKeyProvinceStateA ]][ KKeyLatitudeA ]   = newLatitude
+      oldLatitude   = @stateSummaries[ versionedFieldsIn[ KKeyProvinceStateA ]][ KKeyLatitudeA ]
       oldLongitude  = @stateSummaries[ versionedFieldsIn[ KKeyProvinceStateA ]][ KKeyLongitudeA ]
-      longitude     = oldLongitude * @stateSummaries[ versionedFieldsIn[ KKeyProvinceStateA ]][ "count" ] + versionedFieldsIn[ KKeyLongitudeA ].to_f
-      newLongitude  = longitude / ( @stateSummaries[ versionedFieldsIn[ KKeyProvinceStateA ]][ "count" ] + 1 )
+      if ( 0 == versionedFieldsIn[ KKeyLongitudeA ].length ) || ( versionedFieldsIn[ KKeyLongitudeA ].to_i == 0 )
+        newLatitude   = oldLatitude
+        newLongitude  = oldLongitude
+      else
+        latitude      = oldLatitude * @stateSummaries[ versionedFieldsIn[ KKeyProvinceStateA ]][ "count" ] + versionedFieldsIn[ KKeyLatitudeA ].to_f
+        newLatitude   = latitude / ( @stateSummaries[ versionedFieldsIn[ KKeyProvinceStateA ]][ "count" ] + 1 )
+        longitude     = oldLongitude * @stateSummaries[ versionedFieldsIn[ KKeyProvinceStateA ]][ "count" ] + versionedFieldsIn[ KKeyLongitudeA ].to_f
+        newLongitude  = longitude / ( @stateSummaries[ versionedFieldsIn[ KKeyProvinceStateA ]][ "count" ] + 1 )
+
+        @stateSummaries[ versionedFieldsIn[ KKeyProvinceStateA ]][ "count" ]     += 1
+      end
+      @stateSummaries[ versionedFieldsIn[ KKeyProvinceStateA ]][ KKeyLatitudeA ]   = newLatitude
       @stateSummaries[ versionedFieldsIn[ KKeyProvinceStateA ]][ KKeyLongitudeA ]  = newLongitude
 
-      @stateSummaries[ versionedFieldsIn[ KKeyProvinceStateA ]][ "count" ]     += 1
       puts "indexOneFile: country,state=" + versionedFieldsIn[ KKeyProvinceStateA ] + "," + versionedFieldsIn[ KKeyProvinceStateA ] + "  old lat,long=" + oldLatitude.to_s + "," +
             oldLongitude.to_s + "  count=" + @stateSummaries[ versionedFieldsIn[ KKeyProvinceStateA ]][ "count" ].to_s + "  new lat,long=" + newLatitude.to_s + "," + newLongitude.to_s
     else
@@ -253,6 +258,9 @@ class WelcomeController < ApplicationController
                                                             "Parent" => versionedFieldsIn[ KKeyCountryRegionA ],
                                                             KKeyLatitudeA => versionedFieldsIn[ KKeyLatitudeA ].to_f,
                                                             KKeyLongitudeA => versionedFieldsIn[ KKeyLongitudeA ].to_f }
+      if versionedFieldsIn[ KKeyLongitudeA ] == 0.0
+        @stateSummaries[ versionedFieldsIn[ KKeyProvinceStateA ]][ "count" ] = 0
+      end
     end
 
     newDaily  = Daily.new( :date => datestringIn, :territory => versionedFieldsIn[ KKeyAdmin2b ], :territoryparent => versionedFieldsIn[ KKeyProvinceStateA ],
@@ -269,16 +277,22 @@ class WelcomeController < ApplicationController
       @countrySummaries[ versionedFieldsIn[ KKeyCountryRegionA ]][ "Deaths" ]    += rawDataIn[ "Deaths" ].to_i
 
       oldLatitude = @countrySummaries[ versionedFieldsIn[ KKeyCountryRegionA ]][ KKeyLatitudeA ]
-
-      latitude      = oldLatitude * @countrySummaries[ versionedFieldsIn[ KKeyCountryRegionA ]][ "count" ] + versionedFieldsIn[ KKeyLatitudeA ].to_f
-      newLatitude   = latitude / ( @countrySummaries[ versionedFieldsIn[ KKeyCountryRegionA ]][ "count" ] + 1 )
-      @countrySummaries[ versionedFieldsIn[ KKeyCountryRegionA ]][ KKeyLatitudeA ]   = newLatitude
       oldLongitude  = @countrySummaries[ versionedFieldsIn[ KKeyCountryRegionA ]][ KKeyLongitudeA ]
-      longitude     = oldLongitude * @countrySummaries[ versionedFieldsIn[ KKeyCountryRegionA ]][ "count" ] + versionedFieldsIn[ KKeyLongitudeA ].to_f
-      newLongitude  = longitude / ( @countrySummaries[ versionedFieldsIn[ KKeyCountryRegionA ]][ "count" ] + 1 )
+
+      if ( 0 == versionedFieldsIn[ KKeyLongitudeA ].length ) || ( versionedFieldsIn[ KKeyLongitudeA ].to_i == 0 )
+        newLatitude   = oldLatitude
+        newLongitude  = oldLongitude;
+      else
+        latitude      = oldLatitude * @countrySummaries[ versionedFieldsIn[ KKeyCountryRegionA ]][ "count" ] + versionedFieldsIn[ KKeyLatitudeA ].to_f
+        newLatitude   = latitude / ( @countrySummaries[ versionedFieldsIn[ KKeyCountryRegionA ]][ "count" ] + 1 )
+        longitude     = oldLongitude * @countrySummaries[ versionedFieldsIn[ KKeyCountryRegionA ]][ "count" ] + versionedFieldsIn[ KKeyLongitudeA ].to_f
+        newLongitude  = longitude / ( @countrySummaries[ versionedFieldsIn[ KKeyCountryRegionA ]][ "count" ] + 1 )
+
+        @countrySummaries[ versionedFieldsIn[ KKeyCountryRegionA ]][ "count" ]     += 1
+      end
+      @countrySummaries[ versionedFieldsIn[ KKeyCountryRegionA ]][ KKeyLatitudeA ]   = newLatitude
       @countrySummaries[ versionedFieldsIn[ KKeyCountryRegionA ]][ KKeyLongitudeA ]  = newLongitude
 
-      @countrySummaries[ versionedFieldsIn[ KKeyCountryRegionA ]][ "count" ]     += 1
       puts "indexOneFile: country,state=" + versionedFieldsIn[ KKeyCountryRegionA ] + "," + versionedFieldsIn[ KKeyProvinceStateA ] + "  old lat,long=" + oldLatitude.to_s + "," +
             oldLongitude.to_s + "  count=" + @countrySummaries[ versionedFieldsIn[ KKeyCountryRegionA ]][ "count" ].to_s + "  new lat,long=" + newLatitude.to_s + "," + newLongitude.to_s
     else
@@ -289,6 +303,9 @@ class WelcomeController < ApplicationController
                                                             "Parent" => KTerritoryWorld,
                                                             KKeyLatitudeA => versionedFieldsIn[ KKeyLatitudeA ].to_f,
                                                             KKeyLongitudeA => versionedFieldsIn[ KKeyLongitudeA ].to_f }
+      if versionedFieldsIn[ KKeyLongitudeA ] == 0.0
+        @countrySummaries[ versionedFieldsIn[ KKeyCountryRegionA ]][ "count" ] = 0
+      end
     end
 
     newDaily  = Daily.new( :date => datestringIn, :territory => versionedFieldsIn[ KKeyProvinceStateA ], :territoryparent => versionedFieldsIn[ KKeyCountryRegionA ],
@@ -304,16 +321,23 @@ class WelcomeController < ApplicationController
       @countrySummaries[ stateSummaryIn[ "Parent" ]][ "Deaths" ]    += stateSummaryIn[ "Deaths" ]
 
       oldLatitude = @countrySummaries[ stateSummaryIn[ "Parent" ]][ KKeyLatitudeA ]
-
-      latitude      = oldLatitude * @countrySummaries[ stateSummaryIn[ "Parent" ]][ "count" ] + stateSummaryIn[ KKeyLatitudeA ]
-      newLatitude   = latitude / ( @countrySummaries[ stateSummaryIn[ "Parent" ]][ "count" ] + 1 )
-      @countrySummaries[ stateSummaryIn[ "Parent" ]][ KKeyLatitudeA ]   = newLatitude
       oldLongitude  = @countrySummaries[ stateSummaryIn[ "Parent" ]][ KKeyLongitudeA ]
-      longitude     = oldLongitude * @countrySummaries[ stateSummaryIn[ "Parent" ]][ "count" ] + stateSummaryIn[ KKeyLongitudeA ]
-      newLongitude  = longitude / ( @countrySummaries[ stateSummaryIn[ "Parent" ]][ "count" ] + 1 )
+
+      if ( stateSummaryIn[ KKeyLongitudeA ].to_i == 0 )
+        newLatitude   = oldLatitude
+        newLongitude  = oldLongitude
+      else
+        latitude      = oldLatitude * @countrySummaries[ stateSummaryIn[ "Parent" ]][ "count" ] + stateSummaryIn[ KKeyLatitudeA ]
+        newLatitude   = latitude / ( @countrySummaries[ stateSummaryIn[ "Parent" ]][ "count" ] + 1 )
+        longitude     = oldLongitude * @countrySummaries[ stateSummaryIn[ "Parent" ]][ "count" ] + stateSummaryIn[ KKeyLongitudeA ]
+        newLongitude  = longitude / ( @countrySummaries[ stateSummaryIn[ "Parent" ]][ "count" ] + 1 )
+
+        @countrySummaries[ stateSummaryIn[ "Parent" ]][ "count" ]     += 1
+      end
+
+      @countrySummaries[ stateSummaryIn[ "Parent" ]][ KKeyLatitudeA ]   = newLatitude
       @countrySummaries[ stateSummaryIn[ "Parent" ]][ KKeyLongitudeA ]  = newLongitude
 
-      @countrySummaries[ stateSummaryIn[ "Parent" ]][ "count" ]     += 1
       puts "indexOneFile: country,state=" + stateSummaryIn[ "Parent" ] + "," + stateIn + "  old lat,long=" + oldLatitude.to_s + "," +
             oldLongitude.to_s + "  count=" + @countrySummaries[ stateSummaryIn[ "Parent" ]][ "count" ].to_s + "  new lat,long=" + newLatitude.to_s + "," + newLongitude.to_s
     else
@@ -324,6 +348,9 @@ class WelcomeController < ApplicationController
                                                             "Parent" => KTerritoryWorld,
                                                             KKeyLatitudeA => stateSummaryIn[ KKeyLatitudeA ],
                                                             KKeyLongitudeA => stateSummaryIn[ KKeyLongitudeA ]}
+      if stateSummaryIn[ KKeyLatitudeA ] == 0.0
+        @countrySummaries[ stateSummaryIn[ "Parent" ]][ "count" ] = 0
+      end
     end
   end
 
