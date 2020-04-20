@@ -13,10 +13,10 @@
 
       // function thenDrawTheMap() {
         // For the map
+        gMapsAPIKey = "<%= ENV['DLE_GOOGLE_MAPS_JS_API_KEY'] || YouNeedGoogleMapsAPIkey %>"
         google.charts.load('current', {'packages':['geochart'],
-            'mapsApiKey': 'AIzaSyAD-VN-foLOWEfE6M-aV87IwukEr5ZduPY'
+            'mapsApiKey': gMapsAPIKey
           });
-        //'mapsApiKey': 'AIzaSyD-9tSrke72PouQMnMX-a7eZSW0jkFMBWY'
         google.charts.setOnLoadCallback( drawRegionsMap );
       // }
 
@@ -172,8 +172,7 @@
 
   <body>
   <div  style="display"  id="map_div"> </div>
-
-  <% @uTerritories.each do |oneTerritory| %>
+    <% @uTerritories.each do |oneTerritory| %>
       <% cleanTerritory = oneTerritory.gsub( /[^0-9a-z]/i, '' ) %>
       <div  style="display: inline-block"  id="chart_div_<%= cleanTerritory %>"  width=50%> </div>
     <% end %>
