@@ -68,6 +68,7 @@ class WelcomeController < ApplicationController
 
     puts "indexOneFile: pathIn:        " + pathIn
     puts "indexOneFile: filenameIn:    " + filenameIn
+    @usCounties       = []
     @stateSummaries   = {}
     @countrySummaries = {}
     @worldTotals  = { "Confirmed" => 0,
@@ -175,6 +176,14 @@ class WelcomeController < ApplicationController
       @daily.save
     end
 
+    # Print some data for Kara
+    puts( "US Counties Listing")
+    puts( "State, County, Confirmed, Recovered, Deaths, Latitude, Longitude" )
+    @usCounties.each do |oneUScounty|
+      puts( "#{oneUScounty["State"]}, #{oneUScounty["County"]}, #{oneUScounty["Confirmed"]}, #{oneUScounty["Recovered"]}, #{oneUScounty["Deaths"]}, #{oneUScounty["Latitude"]}, #{oneUScounty["Longitude"]}" )
+    end
+    puts( "US Counties Listing")
+
     # Above indexing on counties produces stateSummaries that we can now push to our db
     puts "indexOneFile: states with counties"
     @stateSummaries.each do |oneKey, oneValue|
@@ -227,6 +236,14 @@ class WelcomeController < ApplicationController
 
 
   def indexOnAdmin2( datestringIn, versionedFieldsIn, rawDataIn )
+    @usCounties.push({ "State" => versionedFieldsIn[ KKeyProvinceStateA ],
+                      "County" => versionedFieldsIn[ KKeyAdmin2b ],
+                      "Confirmed" => rawDataIn[ "Confirmed" ].to_i,
+                      "Recovered" => rawDataIn[ "Recovered" ].to_i,
+                      "Deaths" => rawDataIn[ "Deaths" ].to_i,
+                      KKeyLatitudeA => versionedFieldsIn[ KKeyLatitudeA ].to_f,
+                      KKeyLongitudeA => versionedFieldsIn[ KKeyLongitudeA ].to_f });
+
     if @stateSummaries.key?( versionedFieldsIn[ KKeyProvinceStateA ])
       @stateSummaries[ versionedFieldsIn[ KKeyProvinceStateA ]][ "Confirmed" ] += rawDataIn[ "Confirmed" ].to_i
       @stateSummaries[ versionedFieldsIn[ KKeyProvinceStateA ]][ "Recovered" ] += rawDataIn[ "Recovered" ].to_i

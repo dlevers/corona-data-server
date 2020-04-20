@@ -35,8 +35,9 @@
         //   [33.1, -86.1, 700]
         // ]);
         //  latestForTerritory = @dailies.where( :territory => oneTerritory ).sort_by( &:date )[-1]
+        <% mapCategory = 'confirmed' %>
         var data = google.visualization.arrayToDataTable([
-            ['Latitude', 'Longitude', 'Popularity'],
+            ['Latitude', 'Longitude', 'Active'],
             <% @uTerritories.each do |oneTerritory| %>
               <% latestDate = "00-00" %>
               <% latestRecord = nil %>
@@ -47,10 +48,18 @@
                   <% latestRecord = daily %>
                 <% end %>
               <% end %>
-              <% countToUse = latestRecord.confirmed.to_i - latestRecord.recovered.to_i - latestRecord.deaths.to_i %>
+              <% case mapCategory %>
+              <% when 'active' %>
+                <% countToUse = latestRecord.confirmed.to_i - latestRecord.recovered.to_i - latestRecord.deaths.to_i %>
+              <% when 'deaths' %>
+                <% countToUse = latestRecord.deaths.to_i %>
+              <% when 'confirmed' %>
+                <% countToUse = latestRecord.confirmed.to_i %>
+              <% end %>
               [<%= latestRecord.latitude %>, <%= latestRecord.longitude %>, <%= countToUse %>],
             <% end %>
           ]);
+        //  latestRecord.latitude  latestRecord.longitude  oneTerritory  latestRecord.confirmed.to_i - latestRecord.recovered.to_i - latestRecord.deaths.to_i  countToUse
 
         var regionToUse     = lookupRegion("<%= @parentTerritory %>");
         var resolutionToUse = "provinces";
@@ -87,9 +96,16 @@
           // case "Florida":
           //   territoryOut  = "Florida";
           //   break;
+          case "Maine":
+            territoryOut  = "US-ME";
+            break;
           case "New York":
             territoryOut  = "US-NY";
             break;
+          case "Ohio":
+            territoryOut  = "US-OH";
+            break;
+
 
 
           case "India":
