@@ -35,41 +35,104 @@
         //   [33.1, -86.1, 700]
         // ]);
         //  latestForTerritory = @dailies.where( :territory => oneTerritory ).sort_by( &:date )[-1]
+        var displayModeToUse  = "markers";
+        var regionToUse       = lookupRegion("<%= @parentTerritory %>");
+        var resolutionToUse   = "provinces";
+        if ( regionToUse == "world" ) {
+          resolutionToUse     = "countries";
+          displayModeToUse    = "regions";
+          <% populationMap = @populationCountries %>
+        }
+        if ( regionToUse == "US" ) {
+          displayModeToUse    = "regions";
+          <% populationMap = @populationUSStates %>
+        }
+
+        var data  = null;
         <% mapCategory = 'confirmed' %>
-        var data = google.visualization.arrayToDataTable([
-            ['Latitude', 'Longitude', 'Active'],
-            <% @uTerritories.each do |oneTerritory| %>
-              <% latestDate = "00-00" %>
-              <% latestRecord = nil %>
-              <% @dailies.where( :territory => oneTerritory ).sort_by( &:date ).each do |daily| %>
-                <% sampleDate = daily.date[ 5..-1 ] %>
-                <% if sampleDate > latestDate %>
-                  <% latestDate = sampleDate %>
-                  <% latestRecord = daily %>
+        if ( displayModeToUse == "markers" ) {
+          // Size-of-circle type - based only on total deaths/confirmed/active cases
+          data = google.visualization.arrayToDataTable([
+              ['Latitude', 'Longitude', 'Active'],
+              <% @uTerritories.each do |oneTerritory| %>
+                <% latestDate = "00-00" %>
+                <% latestRecord = nil %>
+                <% @dailies.where( :territory => oneTerritory ).sort_by( &:date ).each do |daily| %>
+                  <% sampleDate = daily.date[ 5..-1 ] %>
+                  <% if sampleDate > latestDate %>
+                    <% latestDate = sampleDate %>
+                    <% latestRecord = daily %>
+                  <% end %>
                 <% end %>
+                <% case mapCategory %>
+                <% when 'active' %>
+                  <% countToUse = latestRecord.confirmed.to_i - latestRecord.recovered.to_i - latestRecord.deaths.to_i %>
+                <% when 'deaths' %>
+                  <% countToUse = latestRecord.deaths.to_i %>
+                <% when 'confirmed' %>
+                  <% countToUse = latestRecord.confirmed.to_i %>
+                <% end %>
+                [<%= latestRecord.latitude %>, <%= latestRecord.longitude %>, <%= countToUse %>],
               <% end %>
-              <% case mapCategory %>
-              <% when 'active' %>
-                <% countToUse = latestRecord.confirmed.to_i - latestRecord.recovered.to_i - latestRecord.deaths.to_i %>
-              <% when 'deaths' %>
-                <% countToUse = latestRecord.deaths.to_i %>
-              <% when 'confirmed' %>
-                <% countToUse = latestRecord.confirmed.to_i %>
+            ]);
+        } else {
+          // Colored-in-region type - based on total deaths/confirmed/active cases relative to population
+          data = google.visualization.arrayToDataTable([
+              ['Region', 'Active'],
+              <% @uTerritories.each do |oneTerritory| %>
+                <% latestDate = "00-00" %>
+                <% latestRecord = nil %>
+                <% @dailies.where( :territory => oneTerritory ).sort_by( &:date ).each do |daily| %>
+                  <% sampleDate = daily.date[ 5..-1 ] %>
+                  <% if sampleDate > latestDate %>
+                    <% latestDate = sampleDate %>
+                    <% latestRecord = daily %>
+                  <% end %>
+                <% end %>
+                <% case mapCategory %>
+                <% when 'active' %>
+                  <% countToUse = latestRecord.confirmed.to_i - latestRecord.recovered.to_i - latestRecord.deaths.to_i %>
+                <% when 'deaths' %>
+                  <% countToUse = latestRecord.deaths.to_i %>
+                <% when 'confirmed' %>
+                  <% countToUse = latestRecord.confirmed.to_i %>
+                <% end %>
+
+                <% if populationMap.key?( oneTerritory ) %>
+                  <% valueToUse = countToUse / populationMap[oneTerritory]["Population"].to_i %>
+                <% else %>
+                  <% valueToUse = 0.0 %>
+                <% end %>
+
+                <% oneTerritory = oneTerritory.gsub(/[^0-9a-z]/i, '') %>
+                // https://github.com/nioya/All-Countries-For-Google-GeoChart/blob/master/geochart-country-name.html
+                <% case oneTerritory %>
+                <% when "Korea,South" %>
+                  <% oneTerritory = "SouthKorea" %>
+                <% when "UnitedKingdom" %>
+                  <% oneTerritory = "GB" %>
+                <% when "US" %>
+                 <% oneTerritory = "United States of America" %>
+                <% end %>
+                <% if oneTerritory.match(/^Coted/) %>
+                  <% oneTerritory = "IvoryCoast" %>
+                <% end %>
+
+                ["<%= oneTerritory %>", <%= valueToUse %>],
               <% end %>
-              [<%= latestRecord.latitude %>, <%= latestRecord.longitude %>, <%= countToUse %>],
-            <% end %>
-          ]);
+            ]);
+        }
         //  latestRecord.latitude  latestRecord.longitude  oneTerritory  latestRecord.confirmed.to_i - latestRecord.recovered.to_i - latestRecord.deaths.to_i  countToUse
 
-        var regionToUse     = lookupRegion("<%= @parentTerritory %>");
-        var resolutionToUse = "provinces";
-        //var resolutionToUse = "metros";
-        if ( regionToUse == "world" ) {
-          resolutionToUse = "countries";
-        }
+        // var regionToUse     = lookupRegion("<%= @parentTerritory %>");
+        // var resolutionToUse = "provinces";
+        // //var resolutionToUse = "metros";
+        // if ( regionToUse == "world" ) {
+        //   resolutionToUse = "countries";
+        // }
         console.log( "drawRegionsMap: regionToUse=" + regionToUse + "  resolutionToUse=" + resolutionToUse )
         var options = { colorAxis: {colors: [ 'blue', 'green', 'yellow', 'orange', 'red' ]},
-          displayMode: 'markers',
+          displayMode: displayModeToUse,
           region: regionToUse,
           resolution: resolutionToUse,
           sizeAxis: { minValue: 0 },
