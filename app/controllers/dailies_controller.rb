@@ -1,3 +1,5 @@
+require 'csv'
+
 class DailiesController < ApplicationController
   def show
     daily = Daily.find( params[ :id ])
@@ -54,5 +56,13 @@ class DailiesController < ApplicationController
     end
     puts "index: Countries=" + @populationCountries.to_s
     puts "index: USStates=" + @populationUSStates.to_s
+
+    if @parentTerritory == "world"
+      @populationToUse = @populationCountries
+    elsif @parentTerritory == "US"
+      @populationToUse = @populationUSStates
+    else
+      @populationToUse = nil
+    end
   end
 end
