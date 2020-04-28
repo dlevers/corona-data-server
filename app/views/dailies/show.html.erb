@@ -26,11 +26,15 @@
         var displayModeToUse  = "markers";
         var regionToUse       = lookupRegion("<%= @parentTerritory %>");
         var resolutionToUse   = "provinces";
+        var usePopulation     = false;
         if ( regionToUse == "world" ) {
           resolutionToUse = "countries";
           usePopulation   = true;
         }
         if ( regionToUse == "US" ) {
+          usePopulation   = true;
+        }
+        if ( regionToUse == "US-FL" ) {
           usePopulation   = true;
         }
 
@@ -91,8 +95,8 @@
                   <% oneTerritory = "United States" %>
                 <% end %>
 
-                <% if @populationToUse.key?( oneTerritory ) %>
-                  <% valueToUse = countToUse.to_f / @populationToUse[oneTerritory]["Population"].gsub(/[^0-9a-z]/i, '').to_f %>
+                <% if !@populationToUse.nil? && @populationToUse.key?( oneTerritory ) %>
+                  <% valueToUse = countToUse.to_f * 100.0 / @populationToUse[oneTerritory]["Population"].gsub(/[^0-9a-z]/i, '').to_f %>
                   <% puts "show: oneTerritory=#{oneTerritory}  countToUse=#{countToUse.to_f}  population=#{@populationToUse[oneTerritory]["Population"].gsub(/[^0-9a-z]/i, '').to_f}  valueToUse=#{valueToUse}" %>
                 <% else %>
                   <% puts "show: NOT FOUND oneTerritory=#{oneTerritory}" %>

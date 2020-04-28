@@ -23,8 +23,9 @@ class DailiesController < ApplicationController
     @uTerritories = sortedTerritoriesWithCounts.keys.uniq
 
 
-    @populationCountries  = {}
-    @populationUSStates   = {}
+    @populationCountries    = {}
+    @populationUSStates     = {}
+    @populationUSFLCounties = {}
 
     populationDataPathBase = ENV[ 'DLE_CORONA_POPULATIONDATA_PATH' ] || "/Users/dlevers/Src/Sandbox/Corona/corona-data-server/data/Population"
     puts "index: populationDataPathBase=" + populationDataPathBase
@@ -37,6 +38,8 @@ class DailiesController < ApplicationController
         dest = 'countries'
       when 'PopulationUSStates202004.csv'
         dest = 'states'
+      when 'PopulationUS-FLCounties202004.csv'
+        dest = 'counties'
       else
         puts "index: UNKNOWN population data filename=" + filename
       end
@@ -50,19 +53,24 @@ class DailiesController < ApplicationController
             @populationCountries[row.to_hash["Country"]]  = row.to_hash
           when 'states'
             @populationUSStates[row.to_hash["State"]]     = row.to_hash
+          when 'counties'
+            @populationUSFLCounties[row.to_hash["County"]]     = row.to_hash
           end
         end
       end
     end
     puts "index: Countries=" + @populationCountries.to_s
     puts "index: USStates=" + @populationUSStates.to_s
+    puts "index: US-FLCounties=" + @populationUSStates.to_s
 
     if @parentTerritory == "world"
       @populationToUse = @populationCountries
     elsif @parentTerritory == "US"
       @populationToUse = @populationUSStates
+    elsif @parentTerritory == "Florida"
+      @populationToUse = @populationUSFLCounties
     else
-      @populationToUse = nil
+      @populationToUse = {}
     end
   end
 end
