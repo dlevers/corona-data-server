@@ -49,3 +49,5 @@ yarn-debug.log*
 /test/system
 /vendor
 yarn.lock
+/backupDB
+runServer.sh

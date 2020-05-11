@@ -93,6 +93,12 @@
                 <% case oneTerritory %>
                 <% when "US" %>
                   <% oneTerritory = "United States" %>
+                <% when "Bahamas The", "The Bahamas" %>
+                  <% oneTerritory = "Bahamas" %>
+                <% when "Cape Verde" %>
+                  <% oneTerritory = "Cabo Verde" %>
+                <% when "Gambia The", "The Gambia" %>
+                  <% oneTerritory = "Gambia" %>
                 <% end %>
 
                 <% if !@populationToUse.nil? && @populationToUse.key?( oneTerritory ) %>
@@ -142,15 +148,12 @@
             territoryOut  = "US-OH";
             break;
 
-
-
           case "India":
             territoryOut  = "IN";
             break;
           case "US":
             territoryOut  = "US";
             break;
-
 
           case "World":
             territoryOut = "world";
@@ -174,7 +177,7 @@
                 <% end %>
               ]);
 
-            // Add chartArea.width at (48%) so that my labels do not get truncated
+            // Add chartArea.width so that my labels do not get truncated
             var options = {
                 title: 'Cases: <%= oneTerritory %>',
                 hAxis: { title: 'Date',
