@@ -61,7 +61,7 @@ class DailiesController < ApplicationController
     end
     puts "index: Countries=" + @populationCountries.to_s
     puts "index: USStates=" + @populationUSStates.to_s
-    puts "index: US-FLCounties=" + @populationUSStates.to_s
+    puts "index: US-FLCounties=" + @populationUSFLCounties.to_s
 
     if @parentTerritory == "world"
       @populationToUse = @populationCountries
