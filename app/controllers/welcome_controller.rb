@@ -1,4 +1,6 @@
 class WelcomeController < ApplicationController
+  protect_from_forgery with: :null_session
+
   KExpectedDatestringLength = 10
   KTerritoryWorld           = "world"
   KKeyCountryRegionA        = "Country/Region"
@@ -14,34 +16,66 @@ class WelcomeController < ApplicationController
 
   KValueProvinceStateRecovered  = "Recovered"
 
-  def index
-    dataPathBase  = ENV[ 'DLE_CORONA_SOURCEDATA_PATH' ] || "/Users/dlevers/Src/Sandbox/Coronavirus19/data/JohnsHopkinsPipedream/"
-    allSummaryConfirmed = 0
-    puts "index: dataPathBase=" + dataPathBase
+  def new_daily
+    data_path_base        = ENV[ 'DLE_CORONA_SOURCEDATA_PATH' ] || "/Users/dlevers/Src/Sandbox/Coronavirus19/data/JohnsHopkinsPipedream/"
+    all_summary_confirmed = 0
+    # puts "index: dataPathBase=" + dataPathBase
 
-    Dir.foreach( dataPathBase ) do |filename|
-      next if filename == '.' or filename == '..'
-
-      # Do work on the remaining files & directories
-      dateString    = dateFromFilename( filename )
-      puts "index: dateString=" + dateString
-      if dateString.length == KExpectedDatestringLength
-        # Valid, keep going
-        dailies = Daily.find_by( :date => dateString )
-        if !dailies
-          puts "index: keep for ZERO dailies.length"
-          allSummaryConfirmed = indexOneFile( dateString, dataPathBase, filename )
-          puts "index: allSummaryConfirmed=" + allSummaryConfirmed.to_s
-        else
-          puts "index: SKIP for existing dailies"
-        end
-      else
-        puts "index: ERROR dateString=" + dateString
-      end
+    # Is the input data valid?
+    unless validate_input?()
+      puts "new_daily: ERROR  validate_input FAILED"
+      html_response = "invaid input"
+      # Rails will halt the action on render, so this exits for us
+      render body: html_response, content_type: 'application/xml'
+      return
     end
 
-    puts "index: allSummary.Confirmed=" + allSummaryConfirmed.to_s
-  
+    # Make a filename for a daily for yesterday - like 2020-05-21.json
+    daily_today_filename  = Date.today.prev_day.to_s + ".json"
+    date_string           = date_from_filename( daily_today_filename )
+    puts "index: dailyTodayFilename=" + daily_today_filename + "  dateString=" + date_string + "  dataPathBase=" + data_path_base
+
+    unless date_string.length == KExpectedDatestringLength
+      puts "new_daily: ERROR  invalid dailyTodayFilename=" + daily_today_filename
+      html_response = "invalid dailyTodayFilename=" + daily_today_filename
+      # Rails will halt the action on render, so this exits for us
+      render body: html_response, content_type: 'application/xml'
+      return
+    end
+
+    # Do we already have that file?  (check for file or folder)
+    target_path = File.join( data_path_base, daily_today_filename )
+    if File.exist?( target_path )
+      puts "new_daily: ERROR  already exists targetPath=" + target_path
+      html_response = "already exists targetPath=" + target_path
+      # Rails will halt the action on render, so this exits for us
+      render body: html_response, content_type: 'application/xml'
+      return
+    end
+
+    # Did we already index that date?
+    dailies     = Daily.find_by( :date => date_string )
+    if dailies
+      puts "new_daily: ERROR  db already contains dateString=" + date_string
+      html_response = "db already contains dateString=" + date_string
+      # Rails will halt the action on render, so this exits for us
+      render body: html_response, content_type: 'application/xml'
+      return
+    end
+
+    # Write params to desination file
+    puts "index: dateString=" + date_string + "  targetPath=" + target_path
+    File.open( target_path,"w" ) do |f|
+      f.write( params.to_json )
+    end
+
+    # All looks good - go ahead
+    all_summary_confirmed = index_input_data( date_string, data_path_base, daily_today_filename )
+    puts "index: allSummary.Confirmed=" + all_summary_confirmed.to_s
+  end
+
+
+  def index
     @dailies = Daily.all
   end
 
@@ -49,7 +83,34 @@ class WelcomeController < ApplicationController
 
   private
 
-  def dateFromFilename( filenameIn )
+  def validate_input?()
+    unless params.key?( "rawData" )
+      puts "validate_input: no rawData"
+      return false
+    end
+
+    params[ "rawData" ].each do |oneRawValue|
+      unless oneRawValue.key?( KKeyCountryRegionA ) || oneRawValue.key?( KKeyCountryRegionB )
+        puts "validate_input: no KKeyCountryRegion"
+        return false
+      end
+
+      unless oneRawValue.key?( KKeyProvinceStateA ) || oneRawValue.key?( KKeyProvinceStateB )
+        puts "validate_input: no KKeyProvinceState"
+        return false
+      end
+
+      unless oneRawValue.key?( KKeyLatitudeA ) || oneRawValue.key?( KKeyLatitudeB )
+        puts "validate_input: no KKeyLatitude"
+        return false
+      end
+    end
+
+    return true
+  end
+
+
+  def date_from_filename( filenameIn )
     dateString  = filenameIn[ 0...10 ]
     testString  = filenameIn[ /....-..-../ ]
     puts "dateFromFilename: dateString=" + dateString + "  testString=" + testString
@@ -62,7 +123,7 @@ class WelcomeController < ApplicationController
   end
 
 
-  def indexOneFile( datestringIn, pathIn, filenameIn )
+  def index_input_data( datestringIn, pathIn, filenameIn )
     fjs = File.read( File.join( pathIn, filenameIn ))
     ojs = JSON.parse( fjs )
 
