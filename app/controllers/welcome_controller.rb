@@ -31,7 +31,6 @@ class WelcomeController < ApplicationController
     end
 
     # Make a filename for a daily for yesterday - like 2020-05-21.json
-    #daily_today_filename  = Time.now.strftime("%Y-%m-%d.json")
     daily_today_filename  = Date.today.prev_day.to_s + ".json"
     date_string           = date_from_filename( daily_today_filename )
     puts "index: dailyTodayFilename=" + daily_today_filename + "  dateString=" + date_string + "  dataPathBase=" + data_path_base
@@ -65,42 +64,13 @@ class WelcomeController < ApplicationController
     end
 
     # Write params to desination file
-    # target_path = File.join( data_path_base, daily_today_filename )
     puts "index: dateString=" + date_string + "  targetPath=" + target_path
     File.open( target_path,"w" ) do |f|
       f.write( params.to_json )
     end
 
-    # puts "new_daily: ERROR  UNIMPLEMENTED"
-    # html_response = "unimplemented"
-    # # Rails will halt the action on render, so this exits for us
-    # render body: html_response, content_type: 'application/xml'
-    # return
-
     # All looks good - go ahead
     all_summary_confirmed = index_input_data( date_string, data_path_base, daily_today_filename )
-
-    # Dir.foreach( dataPathBase ) do |filename|
-    #   next if filename == '.' or filename == '..'
-
-    #   # Do work on the remaining files & directories
-    #   dateString    = dateFromFilename( filename )
-    #   puts "index: dateString=" + dateString
-    #   if dateString.length == KExpectedDatestringLength
-    #     # Valid, keep going
-    #     dailies = Daily.find_by( :date => dateString )
-    #     if !dailies
-    #       puts "index: keep for ZERO dailies.length"
-    #       allSummaryConfirmed = indexOneFile( dateString, dataPathBase, filename )
-    #       puts "index: allSummaryConfirmed=" + allSummaryConfirmed.to_s
-    #     else
-    #       puts "index: SKIP for existing dailies"
-    #     end
-    #   else
-    #     puts "index: ERROR dateString=" + dateString
-    #   end
-    # end
-
     puts "index: allSummary.Confirmed=" + all_summary_confirmed.to_s
   end
 
@@ -153,7 +123,6 @@ class WelcomeController < ApplicationController
   end
 
 
-  # def indexOneFile( datestringIn, pathIn, filenameIn )
   def index_input_data( datestringIn, pathIn, filenameIn )
     fjs = File.read( File.join( pathIn, filenameIn ))
     ojs = JSON.parse( fjs )
