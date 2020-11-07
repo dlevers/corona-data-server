@@ -48,11 +48,18 @@
         //alert( 'clickHandler: event=' + JSON.stringify( event ));
         window.location.href = '<%= daily_path( @dailies.find_by( :territory => "world" )) %>';
       }
+
+      function clickHandler_button60day( event ) {
+        window.location.href = '<%= rate_path( @dailies.find_by( :territory => "world" )) %>';
+      }
     </script>
   </head>
 
   <body>
     <!--Div that will hold the chart-->
     <div  style="display: inline-block; height: 400px; width: 800px;"  id="chart_div_world"></div>
+    <div  style="display: inline-block; height: 400px; width: 400px;"  id="div_60day">
+      <button type="button" onclick="clickHandler_button60day()">View 60-day Rates</button>
+    </div>
   </body>
 </html>
