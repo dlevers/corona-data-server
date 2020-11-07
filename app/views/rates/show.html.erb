@@ -26,96 +26,63 @@
         var displayModeToUse  = "markers";
         var regionToUse       = lookupRegion("<%= @parentTerritory %>");
         var resolutionToUse   = "provinces";
-        var usePopulation     = false;
         if ( regionToUse == "world" ) {
           resolutionToUse = "countries";
-          usePopulation   = true;
         }
-        if ( regionToUse == "US" ) {
-          usePopulation   = true;
-        }
-        if ( regionToUse == "US-FL" ) {
-          usePopulation   = true;
-        }
+
+        <% date_start_string = (Date.today - 60).to_s %>
 
         var data  = null;
-        <% mapCategory = 'confirmed' %>
-        if ( !usePopulation ) {
-          // based only on total deaths/confirmed/active cases
-          data = google.visualization.arrayToDataTable([
-              ['Latitude', 'Longitude', 'Active'],
-              <% @uTerritories.each do |oneTerritory| %>
-                <% latestDate = "00-00" %>
-                <% latestRecord = nil %>
-                <% @dailies.where( :territory => oneTerritory ).sort_by( &:date ).each do |daily| %>
-                  <% sampleDate = daily.date[ 5..-1 ] %>
-                  <% if sampleDate > latestDate %>
-                    <% latestDate = sampleDate %>
-                    <% latestRecord = daily %>
-                  <% end %>
-                <% end %>
-                <% case mapCategory %>
-                <% when 'active' %>
-                  <% countToUse = latestRecord.confirmed.to_i - latestRecord.recovered.to_i - latestRecord.deaths.to_i %>
-                <% when 'deaths' %>
-                  <% countToUse = latestRecord.deaths.to_i %>
-                <% when 'confirmed' %>
-                  <% countToUse = latestRecord.confirmed.to_i %>
-                <% end %>
 
-                [<%= latestRecord.latitude %>, <%= latestRecord.longitude %>, <%= countToUse %>],
+        // puts "rate.index: oneTerritory=" + oneTerritory + "  sampleDate=" + sampleDate + "  latestEndDate=" + latestEndDate
+        // puts "rate.index: oneTerritory=" + oneTerritory + "  sampleDate=" + sampleDate + "  latestStartDate=" + latestStartDate
+        <% byTerritory = {} %>
+        <% @uTerritories.each do |oneTerritory| %>
+          <% latestStartDate = "0000-00-00" %>
+          <% latestEndDate = "0000-00-00" %>
+          <% startRecord = nil %>
+          <% latestRecord = nil %>
+          <% recordsToUse = [] %>
+          <% @dailies.where( :territory => oneTerritory ).sort_by( &:date ).each do |daily| %>
+            <% sampleDate = daily.date %>
+            <% if sampleDate > latestEndDate %>
+              <% latestEndDate = sampleDate %>
+              <% latestRecord = daily %>
+            <% end %>
+            <% if sampleDate > latestStartDate %>
+              <% if sampleDate <= date_start_string %>
+                <% latestStartDate = sampleDate %>
+                <% startRecord = daily %>
               <% end %>
-            ]);
-        } else {
-          // based on total deaths/confirmed/active cases relative to population
-          data = google.visualization.arrayToDataTable([
-            ['Latitude', 'Longitude', 'Rate'],
-              <% @uTerritories.each do |oneTerritory| %>
-                <% latestDate = "00-00" %>
-                <% latestRecord = nil %>
-                <% @dailies.where( :territory => oneTerritory ).sort_by( &:date ).each do |daily| %>
-                  <% sampleDate = daily.date[ 5..-1 ] %>
-                  <% if sampleDate > latestDate %>
-                    <% latestDate = sampleDate %>
-                    <% latestRecord = daily %>
-                  <% end %>
-                <% end %>
-                <% case mapCategory %>
-                <% when 'active' %>
-                  <% countToUse = latestRecord.confirmed.to_i - latestRecord.recovered.to_i - latestRecord.deaths.to_i %>
-                <% when 'deaths' %>
-                  <% countToUse = latestRecord.deaths.to_i %>
-                <% when 'confirmed' %>
-                  <% countToUse = latestRecord.confirmed.to_i %>
-                <% end %>
+            <% end %>
+            <% if sampleDate > date_start_string %>
+              <% recordsToUse.append(daily) %>
+            <% end %>
+          <% end %>
+          <% puts "rate.index: oneTerritory=" + oneTerritory + "  latestStartDate=" + latestStartDate + "  countRecords=" + recordsToUse.length().to_s %>
 
-                <% oneTerritory = oneTerritory.gsub(/[^0-9a-z ]/i, '') %>
-                <% case oneTerritory %>
-                <% when "US" %>
-                  <% oneTerritory = "United States" %>
-                <% when "Bahamas The", "The Bahamas" %>
-                  <% oneTerritory = "Bahamas" %>
-                <% when "Cape Verde" %>
-                  <% oneTerritory = "Cabo Verde" %>
-                <% when "Gambia The", "The Gambia" %>
-                  <% oneTerritory = "Gambia" %>
-                <% end %>
+          <% byTerritory[oneTerritory] = {'startRecord' => startRecord, 'latestRecord' => latestRecord, 'recordsToUse' => recordsToUse} %>
+        <% end %>
 
-                <% if !@populationToUse.nil? && @populationToUse.key?( oneTerritory ) %>
-                  <% pct = countToUse.to_f * 10000.0 / @populationToUse[oneTerritory]["Population"].gsub(/[^0-9a-z]/i, '').to_f %>
-                  <% pct = [pct, 1.0].max %>
-                  <% valueToUse = Math.log(pct) %>
-                  <% valueToUse =[valueToUse, 1.0].max %>
-                  <% puts "show: oneTerritory=#{oneTerritory}  countToUse=#{countToUse.to_f}  population=#{@populationToUse[oneTerritory]["Population"].gsub(/[^0-9a-z]/i, '').to_f}  valueToUse=#{valueToUse}" %>
-                <% else %>
-                  <% puts "show: NOT FOUND oneTerritory=#{oneTerritory}" %>
-                  <% valueToUse = 1.0 %>
-                <% end %>
 
-                [<%= latestRecord.latitude %>, <%= latestRecord.longitude %>, <%= valueToUse %>],
+        data = google.visualization.arrayToDataTable([
+            ['Latitude', 'Longitude', 'Active'],
+            <% byTerritory.each do |oneKey, oneValue| %>
+              <% if oneValue['startRecord'].nil? || oneValue['latestRecord'].nil? %>
+                <% puts "rate.index.LLA  SKIP oneKey=" + oneKey + "  countRecords=" + oneValue['recordsToUse'].length().to_s %>
+                <% next %>
               <% end %>
-            ]);
-        }
+
+              <% valueToUse = oneValue['latestRecord'].confirmed.to_f / oneValue['startRecord'].confirmed.to_f %>
+              <% if valueToUse.to_f.nan? %>
+                <% valueToUse = 1.0 %>
+              <% end %>
+              <% valueToUse = [valueToUse, 6.0].min %>
+              <% puts "rate.index.LLA  oneKey=" + oneKey + "  valueToUse=" + valueToUse.to_s + "  lat,long=" + oneValue['latestRecord'].latitude.to_s + "," + oneValue['latestRecord'].longitude.to_s %>
+
+              [<%= oneValue['latestRecord'].latitude %>, <%= oneValue['latestRecord'].longitude %>, <%= valueToUse %>],
+            <% end %>
+          ]);
 
         console.log( "drawRegionsMap: regionToUse=" + regionToUse + "  resolutionToUse=" + resolutionToUse )
         var options = { colorAxis: {colors: [ 'blue', 'green', 'yellow', 'orange', 'red' ]},
@@ -203,7 +170,7 @@
             chart.draw( data, options );
 
             function clickHandler_<%= cleanTerritory %>( event ) {
-              window.location.href = '<%= daily_path( @dailies.find_by( :territory => oneTerritory )) %>';
+              window.location.href = '<%= rate_path( @dailies.find_by( :territory => oneTerritory )) %>';
             }
         <% end %>
 
