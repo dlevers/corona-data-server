@@ -138,14 +138,27 @@
       // drawGraphTerritories
       //
       function drawGraphTerritories() {
+        <% date_start_string = (Date.today - (6*30)).to_s %>
         <% @uTerritories.each do |oneTerritory| %>
             <% cleanTerritory = oneTerritory.gsub( /[^0-9a-z]/i, '' ) %>
+            <% hasData = false %>
             var data = google.visualization.arrayToDataTable([
                 ['Date', 'Active', 'Recovered', 'Deaths'],
                 <% @dailies.where( :territory => oneTerritory ).sort_by( &:date ).each do |daily| %>
-                  [ "<%= daily.date[ 5..-1 ] %>", <%= daily.confirmed.to_i %> - <%= daily.recovered.to_i %> - <%= daily.deaths.to_i %>, <%= daily.recovered.to_i %>, <%= daily.deaths.to_i %> ],
+                  <% if daily.date < date_start_string %>
+                  <%   next %>
+                  <% end %>
+                  <% hasData = true %>
+                  <% active = [daily.confirmed.to_i - daily.recovered.to_i - daily.deaths.to_i, 1].max %>
+                  <% recovered = [daily.recovered.to_i, 1].max %>
+                  <% deaths = [daily.deaths.to_i, 1].max %>
+                  [ "<%= daily.date[ 5..-1 ] %>", <%= active %>, <%= recovered %>, <%= deaths %> ],
                 <% end %>
               ]);
+
+            <% unless hasData %>
+            <%  next %>
+            <% end %>
 
             // Add chartArea.width so that my labels do not get truncated
             var options = {
