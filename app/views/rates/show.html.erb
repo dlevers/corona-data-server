@@ -38,7 +38,7 @@
         // puts "rate.index: oneTerritory=" + oneTerritory + "  sampleDate=" + sampleDate + "  latestStartDate=" + latestStartDate
         <% byTerritory = {} %>
         <% @uTerritories.each do |oneTerritory| %>
-          <% latestStartDate = "0000-00-00" %>
+          <% latestStartDate = (Date.today - 90).to_s %>
           <% latestEndDate = "0000-00-00" %>
           <% startRecord = nil %>
           <% latestRecord = nil %>
@@ -77,7 +77,7 @@
               <% if valueToUse.to_f.nan? %>
                 <% valueToUse = 1.0 %>
               <% end %>
-              <% valueToUse = [valueToUse, 6.0].min %>
+              <% valueToUse = [valueToUse, 4.0].min %>
               <% puts "rate.index.LLA  oneKey=" + oneKey + "  valueToUse=" + valueToUse.to_s + "  lat,long=" + oneValue['latestRecord'].latitude.to_s + "," + oneValue['latestRecord'].longitude.to_s %>
 
               [<%= oneValue['latestRecord'].latitude %>, <%= oneValue['latestRecord'].longitude %>, <%= valueToUse %>],
